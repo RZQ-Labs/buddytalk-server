@@ -1,0 +1,3 @@
+[submodule "services/worker"]
+	path = services/worker
+	url = git@github.com:RZQ-Labs/buddy-talk-agent.git
