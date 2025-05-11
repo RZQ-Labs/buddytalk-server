@@ -1,0 +1,27 @@
+services:
+  turn:
+    image: coturn/coturn
+    restart: unless-stopped
+    command:
+      [
+        "turnserver",
+        "-n",
+        "--fingerprint",
+        "--lt-cred-mech",
+        "--realm=livekit.local",
+        "--user=turnuser:turnpass",
+        "--listening-port=3478",
+        "--listening-ip=0.0.0.0",
+        "--relay-ip=0.0.0.0",
+        "--min-port=10000",
+        "--max-port=20000",
+      ]
+    ports:
+      - "3478:3478"
+      - "10000-20000:10000-20000/udp"
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge

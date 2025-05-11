@@ -1,4 +1,4 @@
-*.env.*
-!.env.example
+env/*
+!env/.env.example
 
 docker/run/*.y*ml
