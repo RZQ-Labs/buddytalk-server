@@ -1,0 +1,23 @@
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 20000
+  port_range_end: 25000
+  use_external_ip: true
+keys:
+  your-api-key: your-api-secret
+logging:
+  json: false
+  level: info
+redis:
+  address: redis:6379
+  password: ""
+  db: 0
+turn:
+  enabled: true
+  domain: turn.local
+  tls_port: 5349
+  udp_port: 3478
+  external_tls: true
+  cert_file: /etc/ssl/certs/turn.crt
+  key_file: /etc/ssl/private/turn.key
