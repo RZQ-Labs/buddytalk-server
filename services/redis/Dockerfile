@@ -1,6 +1,6 @@
 FROM redis:alpine
 
-LABEL maintainer="Hendro Wibowo <hendro.wibowo@wearesocial.net>"
+LABEL maintainer="Hendro Wibowo <hendrothemail@gmail.com>"
 
 ## For security settings uncomment, make the dir, copy conf, and also start with the conf, to use it
 #RUN mkdir -p /usr/local/etc/redis

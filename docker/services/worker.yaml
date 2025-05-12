@@ -1,33 +1,23 @@
 services:
-  livekit-worker:
+  worker:
     build: ../../services/livekit-worker
-    command: $LIVEKIT_WORKER_COMMAND
+    command: $LK_WORKER_COMMAND
     volumes:
       - ../../services/worker:/code
     ports:
       - "8880:8888" # Map LiveKit Worker to host's port 8888
     restart: unless-stopped
     environment:
-      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
-      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
-      - LIVEKIT_URL=${LIVEKIT_API_URL}
-      - LIVEKIT_SERVER_PORT=${LIVEKIT_SERVER_PORT}
-      - LIVEKIT_API_PORT=${LIVEKIT_API_PORT}
-      - CHROMADB_HOST=chromadb
+      - LK_URL=${LK_URL}
+      - LK_API_KEY=${LK_API_KEY}
+      - LK_API_SECRET=${LK_API_SECRET}
+      - CHROMADB_HOST=${CHROMADB_HOST}
       - CHROMADB_PORT=${CHROMADB_PORT}
       - CHROMADB_COLLECTION=${CHROMADB_COLLECTION}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_DEFAULT_MODEL=${OPENAI_DEFAULT_MODEL}
       - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-      - LUNA_API_BASE_URL=http://api:8000
-      - REFRESH_TOKEN=${API_REFRESH_TOKEN}
-      - ACCESS_TOKEN=${API_ACCESS_TOKEN}
-      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL}
-      - PROMPT_DIR=${PROMPT_DIR:-assets}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      - api
       - chromadb

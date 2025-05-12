@@ -1,0 +1,152 @@
+#!/bin/bash
+
+# =============================================================================
+# Script Name: run_services.sh
+# Author: Hendro Wibowo <hendrothemail@gmail.com>
+# Description: Script to manage docker services.
+# =============================================================================
+
+# Exit the script on any error
+set -e
+
+appname="BuddyTalk"
+
+# Check if the script is running in the root directory
+if [ ! -f .rootdir ]; then
+  echo "Error: This script must be run from the root directory."
+  exit 1
+fi
+
+echo "Managing $appname backend services..."
+
+
+# Parse command line arguments
+while getopts "a:e:s:h" opt; do
+  case $opt in
+    a) ACTION=$OPTARG ;;
+    e) ENV_NAME=$OPTARG ;;
+    s) SERVICE_NAME=$OPTARG ;;
+    h)
+      echo "Usage: $0 [-a action] [-e environment] [-s service_name]"
+      echo "  -a  Action to perform (start, stop, restart, restart-service, show, logs, logs-service)"
+      echo "  -e  Environment name (default: development)"
+      echo "  -s  Service name (required for restart-service and logs-service actions)"
+      exit 0
+      ;;
+    *) echo "Invalid option: -$OPTARG" >&2; exit 1 ;;
+  esac
+done
+
+echo "Selected action: $ACTION"
+
+# Prompt the user to enter the action if not provided as an argument
+if [ -z "$ACTION" ]; then
+  echo "Enter the action (start, stop, restart, restart-service, show, logs, logs-service) [default: start]:"
+  read -r ACTION
+fi
+
+# If no action is provided, use 'start' as default
+ACTION=${ACTION:-start}
+
+# Prompt the user to enter the environment name if not provided as an argument
+if [ -z "$ENV_NAME" ]; then
+  echo "Enter the environment (default: development):"
+  read -r ENV_NAME
+fi
+
+# If no environment name is provided, use 'development' as default
+ENV_NAME=${ENV_NAME:-development}
+
+echo "Selected environment: $ENV_NAME"
+
+# If action is restart-service or logs-service, prompt for the service name if not provided as an argument
+if { [ "$ACTION" == "restart-service" ] || [ "$ACTION" == "logs-service" ]; } && [ -z "$SERVICE_NAME" ]; then
+  echo "Enter the service name:"
+  read -r SERVICE_NAME
+fi
+
+# Set the project name based on the environment name
+PROJECT_NAME="${appname,,}-$ENV_NAME"
+
+# Set the docker compose file based on the environment name
+COMPOSE_FILES="./docker/run/run-$ENV_NAME-compose.yaml"
+
+case "$ACTION" in
+  start)
+    echo "Executing docker compose -f $COMPOSE_FILES up -d"
+    # shellcheck disable=SC2086
+    docker compose -f $COMPOSE_FILES up -V -d
+
+    echo "Executing docker compose -f $COMPOSE_FILES logs -f"
+    # shellcheck disable=SC2086
+    docker compose -f $COMPOSE_FILES logs -f
+    ;;
+  stop)
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" down"
+    docker compose --project-name "$PROJECT_NAME" down
+
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f $COMPOSE_FILES up -d --build"
+    # shellcheck disable=SC2086
+    docker compose --project-name "$PROJECT_NAME" -f $COMPOSE_FILES up -V -d
+
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
+    docker compose --project-name "$PROJECT_NAME" logs -f
+    ;;
+  restart)
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" down"
+    docker compose --project-name "$PROJECT_NAME" down
+
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f $COMPOSE_FILES up -d --build"
+    # shellcheck disable=SC2086
+    docker compose --project-name "$PROJECT_NAME" -f $COMPOSE_FILES up -V -d
+
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
+    docker compose --project-name "$PROJECT_NAME" logs -f
+    ;;
+  full-restart)
+      echo "Executing docker compose --project-name \"$PROJECT_NAME\" down along with volumes removal"
+      docker compose --project-name "$PROJECT_NAME" down --volumes
+
+      echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f $COMPOSE_FILES up -d --build"
+      # shellcheck disable=SC2086
+      docker compose --project-name "$PROJECT_NAME" -f $COMPOSE_FILES up -V -d
+
+      echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
+      docker compose --project-name "$PROJECT_NAME" logs -f
+      ;;
+  restart-service)
+    if [ -z "$SERVICE_NAME" ]; then
+      echo "Error: Service name is required for action 'restart-service'."
+      exit 1
+    fi
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" restart $SERVICE_NAME"
+
+    # shellcheck disable=SC2086
+    docker compose --project-name "$PROJECT_NAME" restart $SERVICE_NAME
+
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
+    docker compose --project-name "$PROJECT_NAME" logs -f
+    ;;
+  show)
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" ps"
+    docker compose --project-name "$PROJECT_NAME" ps
+    ;;
+  logs)
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
+    docker compose --project-name "$PROJECT_NAME" logs -f
+    ;;
+  logs-service)
+    if [ -z "$SERVICE_NAME" ]; then
+      echo "Error: Service name is required for action 'logs-service'."
+      exit 1
+    fi
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f \"$SERVICE_NAME\""
+    docker compose --project-name "$PROJECT_NAME" logs -f "$SERVICE_NAME"
+    ;;
+  *)
+    echo "Error: Unknown action '$ACTION'. Valid options are: start, stop, restart, restart-service, show, logs, logs-service."
+    exit 1
+    ;;
+esac
+
+echo "$appname backend services action '$ACTION' completed."

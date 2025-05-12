@@ -7,7 +7,7 @@ services:
       - LIVEKIT_API_KEY=${LK_API_KEY}
       - LIVEKIT_API_SECRET=${LK_API_SECRET}
     volumes:
-      - ../../services/livekit.yaml:/etc/livekit.yaml:ro
+      - ../../services/livekit/livekit.yaml:/etc/livekit.yaml:ro
     command: --config /etc/livekit.yaml --node-ip 127.0.0.1
 
 networks:

@@ -2,7 +2,7 @@
 
 # =============================================================================
 # Script Name: generate_compose_file.sh
-# Author: Hendro Wibowo <hendro.wibowo@wearesocial.net>
+# Author: Hendro Wibowo <hendrothemail@gmail.com>
 # Description: Script to generate docker compose files.
 # =============================================================================
 
@@ -10,12 +10,14 @@
 set -e
 
 # Check if the script is running in the root directory
-if [ ! -f .root_dir ]; then
+if [ ! -f .rootdir ]; then
   echo "Error: This script must be run from the root directory."
   exit 1
 fi
 
 echo "Generating docker compose files..."
+
+appname="buddytalk"
 
 # Parse command line arguments
 while getopts "e:p:f:h:o" opt; do
@@ -27,7 +29,7 @@ while getopts "e:p:f:h:o" opt; do
     h)
       echo "Usage: $0 [-e environment] [-p project_name] [-f env_file]"
       echo "  -e  Environment name (default: development)"
-      echo "  -p  Project name (default: luna-development)"
+      echo "  -p  Project name (default: $appname-development)"
       echo "  -f  .env file location (default: ./environments/.env)"
       exit 0
       ;;
@@ -48,7 +50,7 @@ echo "Selected environment: $ENV_NAME"
 
 # Prompt the user for the project name if not provided as an argument
 if [ -z "$PROJECT_NAME" ]; then
-  default_project_name="luna-development"
+  default_project_name="$appname-development"
   read -r -p "Enter the project name (default: $default_project_name): " PROJECT_NAME
   PROJECT_NAME=${PROJECT_NAME:-$default_project_name}
 fi
@@ -57,30 +59,29 @@ echo "Selected project name: $PROJECT_NAME"
 
 # Prompt the user for the .env file location if not provided as an argument
 if [ -z "$ENV_FILE" ]; then
-  default_env_file="./environments/.env"
+  default_env_file="./env/.env"
   read -r -p "Enter the .env file location (default: $default_env_file): " ENV_FILE
   ENV_FILE=${ENV_FILE:-$default_env_file}
 fi
 
 echo "Selected .env file location: $ENV_FILE"
 
+services=("adminer" "redis" "worker" "livekit" "turn" "db" "chromadb")
+
 # Set default output file name based on environment
 if [ -n "$ENV_NAME" ]; then
     case $ENV_NAME in
         development)
             echo "Environment: Development"
-            services=("api" "db" "chromadb" "adminer" "redis" "livekit-worker" "messaging-bot" "frontend" "admin-frontend" "monitoring" "worker" "celery-dashboard")
-            default_output_file="./docker/run-development-compose.yaml"
+            default_output_file="./docker/run/run-development-compose.yaml"
             ;;
         staging)
             echo "Environment: Staging"
-            services=("api" "db" "chromadb" "adminer" "redis" "livekit-worker" "messaging-bot" "frontend-nginx" "admin-frontend" "monitoring" "worker")
-            default_output_file="./docker/run-staging-compose.yaml"
+            default_output_file="./docker/run/run-staging-compose.yaml"
             ;;
         production)
             echo "Environment: Production"
-            services=("api" "db" "chromadb" "redis" "livekit-worker" "messaging-bot" "frontend-nginx" "admin-frontend" "monitoring" "worker")
-            default_output_file="./docker/run-production-compose.yaml"
+            default_output_file="./docker/run/run-production-compose.yaml"
             ;;
         custom)
             echo "Environment: Custom"
@@ -88,21 +89,12 @@ if [ -n "$ENV_NAME" ]; then
             # Show available services for custom selection
             echo "Available services:"
             echo "1. adminer: Adminer database management tool"
-            echo "2. admin-frontend: LUNA Admin Panel"
-            echo "3. api: LUNA Backend API"
-            echo "4. chromadb: Chroma database"
-            echo "5. db: MySQL database"
-            echo "6. frontend: LUNA web page (development mode)"
-            echo "7. frontend-nginx: LUNA web page with Nginx (production mode)"
-            echo "8. livekit-server: LiveKit server"
-            echo "9. livekit-worker: LiveKit worker"
-            echo "10. messaging-bot: Messaging bot for Telegram"
-            echo "11. redis: Redis server"
-            echo "12. traefik: Traefik reverse proxy"
-            echo "13. monitoring: Services monitoring tool"
-            echo "14. imgproxy: Image proxy service"
-            echo "15. worker: Worker service"
-            echo "15. celery-dashboard: Celery worker dashboard"
+            echo "2. chromadb: Chroma database"
+            echo "3. db: MySQL database"
+            echo "4. livekit: The LiveKit server"
+            echo "5. worker: The LiveKit worker"
+            echo "6. redis: Redis server"
+            echo "7. turn: The TURN server"
             echo ""
 
             # Let the user select services by number
@@ -114,25 +106,16 @@ if [ -n "$ENV_NAME" ]; then
                 fi
                 case $service_number in
                     1) services+=("adminer") ;;
-                    2) services+=("admin-frontend") ;;
-                    3) services+=("api") ;;
-                    4) services+=("chromadb") ;;
-                    5) services+=("db") ;;
-                    6) services+=("frontend") ;;
-                    7) services+=("frontend-nginx") ;;
-                    8) services+=("livekit-server") ;;
-                    9) services+=("livekit-worker") ;;
-                    10) services+=("messaging-bot") ;;
-                    11) services+=("redis") ;;
-                    12) services+=("traefik") ;;
-                    13) services+=("monitoring") ;;
-                    14) services+=("imgproxy") ;;
-                    15) services+=("worker") ;;
-                    16) services+=("celery-dashboard") ;;
+                    2) services+=("chromadb") ;;
+                    3) services+=("db") ;;
+                    4) services+=("livekit") ;;
+                    5) services+=("redis") ;;
+                    6) services+=("worker") ;;
+                    7) services+=("turn") ;;
                     *) echo "Invalid service number. Please try again." ;;
                 esac
             done
-            default_output_file="./docker/run-custom-compose.yaml"
+            default_output_file="./docker/run/run-custom-compose.yaml"
             ;;
         *)
             echo "Invalid environment name. Exiting."
@@ -151,18 +134,15 @@ else
     case $env_choice in
         1)
             echo "Environment: Development"
-            services=("api" "db" "chromadb" "adminer" "redis" "livekit-worker" "messaging-bot" "frontend" "admin-frontend" "monitoring" "worker" "celery-dashboard")
-            default_output_file="./docker/run-development-compose.yaml"
+            default_output_file="./docker/run/run-development-compose.yaml"
             ;;
         2)
             echo "Environment: Staging"
-            services=("api" "db" "chromadb" "adminer" "redis" "livekit-worker" "messaging-bot" "frontend-nginx" "admin-frontend" "monitoring" "worker")
-            default_output_file="./docker/run-staging-compose.yaml"
+            default_output_file="./docker/run/run-staging-compose.yaml"
             ;;
         3)
             echo "Environment: Production"
-            services=("api" "db" "chromadb" "redis" "livekit-worker" "messaging-bot" "frontend-nginx" "admin-frontend" "monitoring" "worker")
-            default_output_file="./docker/run-production-compose.yaml"
+            default_output_file="./docker/run/run-production-compose.yaml"
             ;;
         4)
             echo "Environment: Custom"
@@ -170,21 +150,12 @@ else
             # Show available services for custom selection
             echo "Available services:"
             echo "1. adminer: Adminer database management tool"
-            echo "2. admin-frontend: LUNA Admin Panel"
-            echo "3. api: LUNA Backend API"
-            echo "4. chromadb: Chroma database"
-            echo "5. db: MySQL database"
-            echo "6. frontend: LUNA web page (development mode)"
-            echo "7. frontend-nginx: LUNA web page with Nginx (production mode)"
-            echo "8. livekit-server: LiveKit server"
-            echo "9. livekit-worker: LiveKit worker"
-            echo "10. messaging-bot: Messaging bot for Telegram"
-            echo "11. redis: Redis server"
-            echo "12. traefik: Traefik reverse proxy"
-            echo "13. monitoring: Services monitoring tool"
-            echo "14. imgproxy: Image proxy service"
-            echo "15. worker: Worker service"
-            echo "15. celery-dashboard: Celery worker dashboard"
+            echo "2. chromadb: Chroma database"
+            echo "3. db: MySQL database"
+            echo "4. livekit: The LiveKit server"
+            echo "5. worker: The LiveKit worker"
+            echo "6. redis: Redis server"
+            echo "7. turn: The TURN server"
             echo ""
 
             # Let the user select services by number
@@ -196,25 +167,16 @@ else
                 fi
                 case $service_number in
                     1) services+=("adminer") ;;
-                    2) services+=("admin-frontend") ;;
-                    3) services+=("api") ;;
-                    4) services+=("chromadb") ;;
-                    5) services+=("db") ;;
-                    6) services+=("frontend") ;;
-                    7) services+=("frontend-nginx") ;;
-                    8) services+=("livekit-server") ;;
-                    9) services+=("livekit-worker") ;;
-                    10) services+=("messaging-bot") ;;
-                    11) services+=("redis") ;;
-                    12) services+=("traefik") ;;
-                    13) services+=("monitoring") ;;
-                    14) services+=("imgproxy") ;;
-                    15) services+=("worker") ;;
-                    16) services+=("celery-dashboard") ;;
+                    2) services+=("chromadb") ;;
+                    3) services+=("db") ;;
+                    4) services+=("livekit") ;;
+                    5) services+=("redis") ;;
+                    6) services+=("worker") ;;
+                    7) services+=("turn") ;;
                     *) echo "Invalid service number. Please try again." ;;
                 esac
             done
-            default_output_file="./docker/run-custom-compose.yaml"
+            default_output_file="./docker/run/run-custom-compose.yaml"
             ;;
         *)
             echo "Invalid environment choice. Exiting."
