@@ -1,0 +1,11 @@
+services:
+  redis:
+    build: ../../services/redis
+    command: --requirepass ${REDIS_PASSWORD:-buddytalk}
+    restart: unless-stopped
+    expose:
+      - 6379
+    ports:
+      - 6379:6379
+    networks:
+      - default

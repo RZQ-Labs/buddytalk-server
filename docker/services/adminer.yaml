@@ -1,0 +1,12 @@
+services:
+  adminer:
+    build:
+      context: ../../services/adminer
+    environment:
+      - ADMINER_PLUGINS=
+      - ADMINER_DESIGN=pepa-linha
+      - ADMINER_DEFAULT_SERVER=postgres
+    ports:
+      - "${ADMINER_PORT}:8080"
+    depends_on:
+      - db

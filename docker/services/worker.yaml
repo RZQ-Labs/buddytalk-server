@@ -1,0 +1,23 @@
+services:
+  worker:
+    build: ../../services/worker
+    command: $LK_WORKER_COMMAND
+    volumes:
+      - ../../services/worker:/code
+    ports:
+      - "8880:8888" # Map LiveKit Worker to host's port 8888
+    restart: unless-stopped
+    environment:
+      - LK_URL=${LK_URL}
+      - LK_API_KEY=${LK_API_KEY}
+      - LK_API_SECRET=${LK_API_SECRET}
+      - CHROMADB_HOST=${CHROMADB_HOST}
+      - CHROMADB_PORT=${CHROMADB_PORT}
+      - CHROMADB_COLLECTION=${CHROMADB_COLLECTION}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_DEFAULT_MODEL=${OPENAI_DEFAULT_MODEL}
+      - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - chromadb

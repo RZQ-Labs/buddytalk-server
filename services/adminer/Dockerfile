@@ -1,6 +1,6 @@
 FROM adminer:latest
 
-LABEL maintainer="Hendro Wibowo <hendro.wibowo@wearesocial.net>"
+LABEL maintainer="Hendro Wibowo <hendrothemail@gmail.com>"
 
 # Add volume for sessions to allow session persistence
 VOLUME /sessions

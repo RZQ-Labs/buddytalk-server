@@ -1,0 +1,17 @@
+services:
+  chromadb:
+    image: chromadb/chroma:${CHROMADB_VERSION:-latest}
+    # ports:
+    #   - ${CHROMADB_PORT}:8000
+    expose:
+      - 8000
+    volumes:
+      - ../../services/chromadb:/chroma/chroma
+    environment:
+      - CHROMA_PORT=${CHROMADB_PORT}
+      - CHROMA_PERSIST_DIRECTORY="/data"
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma/data # this is the default path, change it as needed
+      - ANONYMIZED_TELEMETRY=${ANONYMIZED_TELEMETRY:-TRUE}
+    # command: python startup.py
+    restart: always
