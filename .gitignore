@@ -2,4 +2,4 @@ env/*
 !env/.env.example
 
 docker/run/*.y*ml
-livekit.yaml
+services/livekit/livekit.yaml
