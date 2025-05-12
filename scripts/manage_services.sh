@@ -19,31 +19,33 @@ fi
 
 echo "Managing $appname backend services..."
 
-# Load API key and secret from .env file
-if [ -f "./env/.env" ]; then
-  # Extract API key and secret, removing quotes if present
-  LK_API_KEY=$(grep "LK_API_KEY" ./env/.env | cut -d '=' -f2 | tr -d '"')
-  LK_API_SECRET=$(grep "LK_API_SECRET" ./env/.env | cut -d '=' -f2 | tr -d '"')
+# Check if livekit.yaml exists, if not generate it from example file
+if [ ! -f services/livekit/livekit.yaml ]; then
+  echo "Generating LiveKit config from example..."
 
-  # Update LiveKit config with API key and secret
-  if [ -f "./services/livekit/livekit.yaml" ]; then
-    echo "Updating LiveKit config with API key and secret from .env file..."
-    # Create a temporary file with proper indentation for YAML
-    awk -v api_key="$LK_API_KEY" -v api_secret="$LK_API_SECRET" '{
-      if ($0 ~ /^keys:/) {
-        print $0;
-        print "  " api_key ": " api_secret;
-        getline;  # Skip the next line (the original key-value pair)
-      } else {
-        print $0;
-      }
-    }' ./services/livekit/livekit.yaml > ./services/livekit/livekit.yaml.new
-
-    # Replace the original file with the new one
-    mv ./services/livekit/livekit.yaml.new ./services/livekit/livekit.yaml
-    echo "LiveKit configuration updated successfully."
+  # Check if env file exists
+  if [ ! -f env/.env ]; then
+    echo "Error: env/.env file not found. Please create it first."
+    exit 1
   fi
+
+  # Get LiveKit credentials from env file
+  LK_API_KEY=$(grep LK_API_KEY env/.env | cut -d '=' -f2)
+  LK_API_SECRET=$(grep LK_API_SECRET env/.env | cut -d '=' -f2)
+
+  if [ -z "$LK_API_KEY" ] || [ -z "$LK_API_SECRET" ]; then
+    echo "Error: LiveKit API credentials not found in env/.env"
+    exit 1
+  fi
+
+  # Create livekit.yaml from example and replace credentials
+  cp services/livekit/livekit.yaml.example services/livekit/livekit.yaml
+  sed -i "s/your-api-key/$LK_API_KEY/" services/livekit/livekit.yaml
+  sed -i "s/your-api-secret/$LK_API_SECRET/" services/livekit/livekit.yaml
+
+  echo "LiveKit config generated successfully"
 fi
+
 
 # Parse command line arguments
 while getopts "a:e:s:h" opt; do
