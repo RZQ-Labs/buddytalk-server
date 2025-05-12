@@ -1,6 +1,6 @@
 services:
   worker:
-    build: ../../services/livekit-worker
+    build: ../../services/worker
     command: $LK_WORKER_COMMAND
     volumes:
       - ../../services/worker:/code

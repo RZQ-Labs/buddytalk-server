@@ -19,6 +19,31 @@ fi
 
 echo "Managing $appname backend services..."
 
+# Load API key and secret from .env file
+if [ -f "./env/.env" ]; then
+  # Extract API key and secret, removing quotes if present
+  LK_API_KEY=$(grep "LK_API_KEY" ./env/.env | cut -d '=' -f2 | tr -d '"')
+  LK_API_SECRET=$(grep "LK_API_SECRET" ./env/.env | cut -d '=' -f2 | tr -d '"')
+
+  # Update LiveKit config with API key and secret
+  if [ -f "./services/livekit/livekit.yaml" ]; then
+    echo "Updating LiveKit config with API key and secret from .env file..."
+    # Create a temporary file with proper indentation for YAML
+    awk -v api_key="$LK_API_KEY" -v api_secret="$LK_API_SECRET" '{
+      if ($0 ~ /^keys:/) {
+        print $0;
+        print "  " api_key ": " api_secret;
+        getline;  # Skip the next line (the original key-value pair)
+      } else {
+        print $0;
+      }
+    }' ./services/livekit/livekit.yaml > ./services/livekit/livekit.yaml.new
+
+    # Replace the original file with the new one
+    mv ./services/livekit/livekit.yaml.new ./services/livekit/livekit.yaml
+    echo "LiveKit configuration updated successfully."
+  fi
+fi
 
 # Parse command line arguments
 while getopts "a:e:s:h" opt; do
@@ -66,20 +91,20 @@ if { [ "$ACTION" == "restart-service" ] || [ "$ACTION" == "logs-service" ]; } &&
 fi
 
 # Set the project name based on the environment name
-PROJECT_NAME="${appname,,}-$ENV_NAME"
+PROJECT_NAME="${appname:l}-$ENV_NAME"
 
 # Set the docker compose file based on the environment name
 COMPOSE_FILES="./docker/run/run-$ENV_NAME-compose.yaml"
 
 case "$ACTION" in
   start)
-    echo "Executing docker compose -f $COMPOSE_FILES up -d"
+    echo "Executing docker compose -f "$COMPOSE_FILES" up -d"
     # shellcheck disable=SC2086
-    docker compose -f $COMPOSE_FILES up -V -d
+    docker compose -f "$COMPOSE_FILES" up -V -d
 
-    echo "Executing docker compose -f $COMPOSE_FILES logs -f"
+    echo "Executing docker compose -f "$COMPOSE_FILES" logs -f"
     # shellcheck disable=SC2086
-    docker compose -f $COMPOSE_FILES logs -f
+    docker compose -f "$COMPOSE_FILES" logs -f
     ;;
   stop)
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" down"
@@ -87,7 +112,7 @@ case "$ACTION" in
 
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f $COMPOSE_FILES up -d --build"
     # shellcheck disable=SC2086
-    docker compose --project-name "$PROJECT_NAME" -f $COMPOSE_FILES up -V -d
+    docker compose --project-name "$PROJECT_NAME" -f "$COMPOSE_FILES" up -V -d
 
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
     docker compose --project-name "$PROJECT_NAME" logs -f
@@ -96,9 +121,9 @@ case "$ACTION" in
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" down"
     docker compose --project-name "$PROJECT_NAME" down
 
-    echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f $COMPOSE_FILES up -d --build"
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f \"$COMPOSE_FILES\" up -d --build"
     # shellcheck disable=SC2086
-    docker compose --project-name "$PROJECT_NAME" -f $COMPOSE_FILES up -V -d
+    docker compose --project-name "$PROJECT_NAME" -f "$COMPOSE_FILES" up -V -d
 
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
     docker compose --project-name "$PROJECT_NAME" logs -f
@@ -107,9 +132,15 @@ case "$ACTION" in
       echo "Executing docker compose --project-name \"$PROJECT_NAME\" down along with volumes removal"
       docker compose --project-name "$PROJECT_NAME" down --volumes
 
-      echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f $COMPOSE_FILES up -d --build"
-      # shellcheck disable=SC2086
-      docker compose --project-name "$PROJECT_NAME" -f $COMPOSE_FILES up -V -d
+      echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f \"$COMPOSE_FILES\" up -d --build"
+
+      # This command runs docker compose with the following parameters:
+      # --project-name "$PROJECT_NAME": Sets the project name from the variable defined earlier
+      # -f "$COMPOSE_FILES": Specifies the compose file to use from the variable defined earlier
+      # up: Creates and starts the containers defined in the compose file
+      # -V: Recreates anonymous volumes instead of retrieving data from previous containers
+      # -d: Runs containers in detached mode (in the background)
+      docker compose --project-name "$PROJECT_NAME" -f "$COMPOSE_FILES" up -V -d
 
       echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
       docker compose --project-name "$PROJECT_NAME" logs -f
