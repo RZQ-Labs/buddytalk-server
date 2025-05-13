@@ -66,7 +66,7 @@ fi
 
 echo "Selected .env file location: $ENV_FILE"
 
-services=("adminer" "redis" "worker" "livekit" "turn" "db" "chromadb")
+services=("adminer" "redis" "db" "chromadb")
 
 # Set default output file name based on environment
 if [ -n "$ENV_NAME" ]; then
@@ -77,10 +77,12 @@ if [ -n "$ENV_NAME" ]; then
             ;;
         staging)
             echo "Environment: Staging"
+            services+=("turn" "livekit")
             default_output_file="./docker/run/run-staging-compose.yaml"
             ;;
         production)
             echo "Environment: Production"
+            services+=("turn" "livekit")
             default_output_file="./docker/run/run-production-compose.yaml"
             ;;
         custom)
@@ -138,10 +140,12 @@ else
             ;;
         2)
             echo "Environment: Staging"
+            services+=("turn" "livekit")
             default_output_file="./docker/run/run-staging-compose.yaml"
             ;;
         3)
             echo "Environment: Production"
+            services+=("turn" "livekit")
             default_output_file="./docker/run/run-production-compose.yaml"
             ;;
         4)

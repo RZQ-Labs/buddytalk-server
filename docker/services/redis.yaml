@@ -1,6 +1,7 @@
 services:
   redis:
     build: ../../services/redis
+    platform: linux/arm64
     command: --requirepass ${REDIS_PASSWORD:-buddytalk}
     restart: unless-stopped
     expose:

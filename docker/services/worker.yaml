@@ -1,16 +1,17 @@
 services:
   worker:
+    platform: linux/arm64
     build: ../../services/worker
-    command: $LK_WORKER_COMMAND
+    # command: cargo watch -x run
     volumes:
-      - ../../services/worker:/code
+      - ../../services/worker:/app
     ports:
       - "8880:8888" # Map LiveKit Worker to host's port 8888
     restart: unless-stopped
     environment:
-      - LK_URL=${LK_URL}
-      - LK_API_KEY=${LK_API_KEY}
-      - LK_API_SECRET=${LK_API_SECRET}
+      - LIVEKIT_URL=${LK_URL}
+      - LIVEKIT_API_KEY=${LK_API_KEY}
+      - LIVEKIT_API_SECRET=${LK_API_SECRET}
       - CHROMADB_HOST=${CHROMADB_HOST}
       - CHROMADB_PORT=${CHROMADB_PORT}
       - CHROMADB_COLLECTION=${CHROMADB_COLLECTION}

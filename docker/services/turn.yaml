@@ -1,6 +1,7 @@
 services:
   turn:
     image: coturn/coturn
+    platform: linux/arm64
     restart: unless-stopped
     command:
       [

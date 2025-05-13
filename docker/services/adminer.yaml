@@ -1,5 +1,6 @@
 services:
   adminer:
+    platform: linux/arm64
     build:
       context: ../../services/adminer
     environment:

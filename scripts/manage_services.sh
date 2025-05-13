@@ -9,7 +9,7 @@
 # Exit the script on any error
 set -e
 
-appname="BuddyTalk"
+appname="buddytalk"
 
 # Check if the script is running in the root directory
 if [ ! -f .rootdir ]; then
@@ -110,42 +110,39 @@ case "$ACTION" in
     ;;
   stop)
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" down"
-    docker compose --project-name "$PROJECT_NAME" down
-
-    echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f $COMPOSE_FILES up -d --build"
-    # shellcheck disable=SC2086
-    docker compose --project-name "$PROJECT_NAME" -f "$COMPOSE_FILES" up -V -d
-
-    echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
-    docker compose --project-name "$PROJECT_NAME" logs -f
+    docker compose -f "$COMPOSE_FILES" down
+    ;;
+  full-stop)
+    echo "Executing docker compose --project-name \"$PROJECT_NAME\" down along with volumes removal"
+    docker compose -f "$COMPOSE_FILES" down --volumes
     ;;
   restart)
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" down"
-    docker compose --project-name "$PROJECT_NAME" down
+    docker compose -f "$COMPOSE_FILES" down
 
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f \"$COMPOSE_FILES\" up -d --build"
     # shellcheck disable=SC2086
-    docker compose --project-name "$PROJECT_NAME" -f "$COMPOSE_FILES" up -V -d
+    docker compose -f "$COMPOSE_FILES" -f "$COMPOSE_FILES" up -V -d
 
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
-    docker compose --project-name "$PROJECT_NAME" logs -f
+    docker compose -f "$COMPOSE_FILES" logs -f
     ;;
   full-restart)
       echo "Executing docker compose --project-name \"$PROJECT_NAME\" down along with volumes removal"
-      docker compose --project-name "$PROJECT_NAME" down --volumes
+      docker compose -f "$COMPOSE_FILES" down --volumes
 
-      echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f \"$COMPOSE_FILES\" up -d --build"
+      echo "Executing docker compose --project-name \"$PROJECT_NAME\" -f \"$COMPOSE_FILES\" up -d --build --no-cache"
 
       # This command runs docker compose with the following parameters:
-      # --project-name "$PROJECT_NAME": Sets the project name from the variable defined earlier
+      # -f "$COMPOSE_FILES": Sets the project name from the variable defined earlier
       # -f "$COMPOSE_FILES": Specifies the compose file to use from the variable defined earlier
       # up: Creates and starts the containers defined in the compose file
       # -V: Recreates anonymous volumes instead of retrieving data from previous containers
       # -d: Runs containers in detached mode (in the background)
-      docker compose --project-name "$PROJECT_NAME" -f "$COMPOSE_FILES" up -V -d
+      docker compose -f "$COMPOSE_FILES" -f "$COMPOSE_FILES" up -V -d
 
       echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
-      docker compose --project-name "$PROJECT_NAME" logs -f
+      docker compose -f "$COMPOSE_FILES" logs -f
       ;;
   restart-service)
     if [ -z "$SERVICE_NAME" ]; then
@@ -155,18 +152,18 @@ case "$ACTION" in
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" restart $SERVICE_NAME"
 
     # shellcheck disable=SC2086
-    docker compose --project-name "$PROJECT_NAME" restart $SERVICE_NAME
+    docker compose -f "$COMPOSE_FILES" restart $SERVICE_NAME
 
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
-    docker compose --project-name "$PROJECT_NAME" logs -f
+    docker compose -f "$COMPOSE_FILES" logs -f
     ;;
   show)
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" ps"
-    docker compose --project-name "$PROJECT_NAME" ps
+    docker compose -f "$COMPOSE_FILES" ps
     ;;
   logs)
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f"
-    docker compose --project-name "$PROJECT_NAME" logs -f
+    docker compose -f "$COMPOSE_FILES" logs -f
     ;;
   logs-service)
     if [ -z "$SERVICE_NAME" ]; then
@@ -174,7 +171,7 @@ case "$ACTION" in
       exit 1
     fi
     echo "Executing docker compose --project-name \"$PROJECT_NAME\" logs -f \"$SERVICE_NAME\""
-    docker compose --project-name "$PROJECT_NAME" logs -f "$SERVICE_NAME"
+    docker compose -f "$COMPOSE_FILES" logs -f "$SERVICE_NAME"
     ;;
   *)
     echo "Error: Unknown action '$ACTION'. Valid options are: start, stop, restart, restart-service, show, logs, logs-service."

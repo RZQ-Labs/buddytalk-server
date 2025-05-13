@@ -1,10 +1,13 @@
 services:
   chromadb:
     image: chromadb/chroma:${CHROMADB_VERSION:-latest}
+    platform: linux/arm64
     # ports:
     #   - ${CHROMADB_PORT}:8000
     expose:
       - 8000
+    ports:
+      - ${CHROMADB_PORT:-8000}:8000
     volumes:
       - ../../services/chromadb:/chroma/chroma
     environment:

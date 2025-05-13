@@ -1,6 +1,7 @@
 services:
   db:
     image: mysql:latest
+    platform: linux/arm64
     restart: always
     environment:
       - MYSQL_DATABASE=${MYSQL_DATABASE}
@@ -9,6 +10,8 @@ services:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     expose:
       - ${MYSQL_PORT}
+    ports:
+      - ${MYSQL_PORT}:${MYSQL_PORT}
     volumes:
       - luna_db_volume:/var/lib/mysql
 
