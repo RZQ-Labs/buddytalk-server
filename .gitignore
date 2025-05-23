@@ -3,3 +3,5 @@ env/*
 
 docker/run/*.y*ml
 services/livekit/livekit.yaml
+target/
+.DS_Store
